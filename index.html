@@ -1,0 +1,183 @@
+<html>
+    <head><title>doc</title></head>
+    <body>
+        
+
+        <input type="text" id="title" placeholder="Enter title"><br><br>
+        <input type="text" id="description" placeholder="Enter description"><br><br>
+        <button onclick="addTodo()">Add Todo</button>
+
+        <div id="todos"></div>
+
+
+
+       <script>
+        //globals
+        let globalvarID = 1;
+        let todoState = [];
+        let oldtodoState = [];
+
+
+
+        //creating outerdiv which contain 4 more div(title,description,mark as done,remove todo)
+        function createChildDiv(title,description,completed,id){
+              const outerDiv = document.createElement("div");
+
+                const innerDiv1 = document.createElement("div")
+                innerDiv1.innerHTML = title
+
+                const innerDiv2 = document.createElement("div")
+                innerDiv2.innerHTML = description
+
+                const innerDiv3 = document.createElement("button")
+                innerDiv3.innerHTML = completed ? "done" : "mark as done"
+                innerDiv3.setAttribute("onclick",`markAsDone(${id})`)
+
+                const innerDiv4 = document.createElement("button")
+                innerDiv4.innerHTML = "remove todo"
+                innerDiv4.setAttribute("onclick",`removeTodo(${id})`)
+              
+                outerDiv.appendChild(innerDiv1);
+                outerDiv.appendChild(innerDiv2);
+                outerDiv.appendChild(innerDiv3);
+                outerDiv.appendChild(innerDiv4);
+
+                outerDiv.setAttribute("id",id);
+
+                return outerDiv;
+
+        }
+
+        //updating dom
+        function markAsDone(id){
+            for(let i=0;i<todoState.length;i++){
+                if(todoState[i].id === id){
+                    todoState[i].completed = !todoState[i].completed;
+                    break;
+                }
+            }
+            updateState(todoState);
+        }
+
+        //adding element in dom
+        function addTodo(){
+            let title = document.getElementById("title").value;
+            let description = document.getElementById("description").value;
+
+            todoState.push({
+                id : globalvarID++,
+                title : title,
+                description : description,
+                completed : false
+            })
+            
+            updateState(todoState);
+        }
+
+        //removing dom element---outerdiv by id
+        function removeTodo(id){
+            let arr = [];
+            for(let i=0;i<todoState.length;i++){
+                if(id != todoState[i].id){
+                    arr.push(todoState[i]);
+                }
+            }
+            todoState = arr;
+            updateState(todoState);
+        }
+
+        //last step of mark as done ---- updating dom
+        function updateTodo(newtodo,oldTodo){
+
+            let el = document.getElementById(oldTodo.id);
+            el.children[0].innerHTML = newtodo.title;
+            el.children[1].innerHTML = newtodo.description;
+            el.children[2].innerHTML = newtodo.completed ? "done" : "mark as done";
+            
+        }
+
+
+        //manually doing what react does automatically aka keeping track of states
+        function updateState(newTodos){
+
+            let added = [];
+            let update = [];
+            let removed = [];
+
+
+
+
+            for(let i=0;i<newTodos.length;i++){
+                let newtodo = newTodos[i];
+                let found = false;
+
+                        for(let j=0;j<oldtodoState.length;j++){
+                            if(newtodo.id === oldtodoState[j].id){
+                                found = true;
+
+                                if(
+                                    newtodo.title != oldtodoState[j].title ||
+                                    newtodo.description != oldtodoState[j].description ||
+                                    newtodo.completed != oldtodoState[j].completed 
+                                ){
+                                    update.push({
+                                        oldTodo : oldtodoState[j],
+                                        newtodo: newtodo,
+                                    })
+                                }
+                            }
+                           
+                        }
+                if(!found){
+                    added.push(newtodo);
+                }
+            }
+
+
+            for(let i=0;i<added.length;i++){
+                let a = added[i];
+                let div = createChildDiv(a.title,a.description,a.completed,a.id);
+                const parent = document.getElementById("todos");
+                parent.append(div);
+            }
+
+            //for finding removed obj and pushing it into removed[]
+            for(let i=0;i<oldtodoState.length;i++){
+                let oldtodo = oldtodoState[i];
+                let found = false;
+                   for(let j=0;j<todoState.length;j++){
+                    if(oldtodo.id == todoState[j].id){
+                        found = true;
+                        break;
+                        
+                    }
+                   }
+                   if(!found){
+                    removed.push(oldtodo);
+                   }
+            }
+
+            //removing from dom
+            for(let i=0;i<removed.length;i++){
+                let el = document.getElementById(removed[i].id);
+                if(el){
+                     el.remove();
+                }
+               
+            }
+
+            for( let i= 0; i<update.length;i++){
+
+                updateTodo(update[i].newtodo,update[i].oldTodo);
+            }
+
+
+            oldtodoState = JSON.parse(JSON.stringify(newTodos));
+            
+        }
+
+       </script>
+
+
+    </body>
+</html>

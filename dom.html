@@ -1,0 +1,168 @@
+<html>
+    <head>
+    </head>
+
+    <body>
+        
+        <input type="text" id="title" placeholder="Enter title"><br><br>
+        <input type="text" id="description" placeholder="Enter description"><br><br>
+        <button onclick="addTodo()">Add Todo</button>
+
+        <div id="todos"></div>
+
+        <script>
+            let globalvarID = 1;
+            let todoState = [];
+            let oldtodoState = [];
+
+            //add todo
+            function createChildDiv(title,description,id,completed){
+                const outerDiv = document.createElement("div");
+
+                const innerDiv1 = document.createElement("div")
+                innerDiv1.innerHTML = title
+
+                const innerDiv2 = document.createElement("div")
+                innerDiv2.innerHTML = description
+
+                const innerDiv3 = document.createElement("button")
+                innerDiv3.innerHTML = completed ? "done" : "mark as done"
+                innerDiv3.setAttribute("onclick",`markAsDone(${id})`)
+
+                const innerDiv4 = document.createElement("button")
+                innerDiv4.innerHTML = "remove todo"
+                innerDiv4.setAttribute("onclick",`removeTodo(${id})`)
+              
+                outerDiv.appendChild(innerDiv1);
+                outerDiv.appendChild(innerDiv2);
+                outerDiv.appendChild(innerDiv3);
+                outerDiv.appendChild(innerDiv4);
+
+                outerDiv.setAttribute("id",id);
+
+                return outerDiv;
+            }    
+
+            function markAsDone(id){
+                for(let i=0;i<todoState.length;i++){
+                    if(todoState[i].id === id){
+                        todoState[i].completed = !todoState[i].completed;
+                    }
+                }
+                updateState(todoState);
+            }  
+
+            function addTodo(){
+                const title = document.getElementById("title").value
+                const description = document.getElementById("description").value
+                
+                todoState.push({
+                    title : title,
+                    description : description,
+                    id : globalvarID++,
+                    completed : false
+                })
+
+                updateState(todoState);
+            }
+
+            function removeTodo(todoid){
+                let newarr = [];
+                for(let i=0;i<todoState.length;i++){
+                    if(todoState[i].id !== todoid){
+                        newarr.push(todoState[i]);
+                    }
+                }
+                todoState = newarr;
+
+                updateState(todoState);
+            }
+
+            function updateTodo(oldtodo,newtodo){
+                const element = document.getElementById(oldtodo.id);
+
+                element.children[0].innerHTML = newtodo.title;
+                element.children[1].innerHTML = newtodo.description;
+                element.children[2].innerHTML = newtodo.completed ? "done" : "mark as done";
+            }
+
+            //newTodo = todoState
+            function updateState(newTodos){
+
+                const added = [];
+                const deleted = [];
+                const updated = [];
+
+                //find added + updated
+                for(let i=0;i<newTodos.length;i++){
+                    let newtodo = newTodos[i];
+                    let found = false;
+
+                    for(let j=0;j<oldtodoState.length;j++){
+                        if(oldtodoState[j].id === newtodo.id) {
+                            found = true;
+
+                            if(
+                                oldtodoState[j].title !== newtodo.title ||
+                                oldtodoState[j].description !== newtodo.description ||
+                                oldtodoState[j].completed !== newtodo.completed
+                            ){
+                                updated.push({
+                                    oldtodo : oldtodoState[j],
+                                    newtodo : newtodo
+                                });
+                            }
+                        }
+                    }
+
+                    if(!found){
+                        added.push(newtodo);
+                    }
+                }
+
+                //find deleted
+                for(let i=0;i<oldtodoState.length;i++){
+                    let oldtodo = oldtodoState[i];
+                    let found = false;
+
+                    for(let j=0;j<newTodos.length;j++){
+                        if(newTodos[j].id === oldtodo.id){
+                            found = true;
+                        }
+                    }
+
+                    if(!found){
+                        deleted.push(oldtodo);
+                    }
+                }
+
+                const parent = document.getElementById("todos");
+
+                //ADD
+                for(let i=0;i<added.length;i++){
+                    let todo = added[i];
+                    let el = createChildDiv(todo.title,todo.description,todo.id,todo.completed);
+                    parent.appendChild(el);
+                }
+
+                //DELETE
+                for(let i=0;i<deleted.length;i++){
+                    let el = document.getElementById(deleted[i].id);
+                    if(el){
+                        el.remove();
+                    }
+                }
+
+                //UPDATE
+                for(let i=0;i<updated.length;i++){
+                    updateTodo(updated[i].oldtodo,updated[i].newtodo);
+                }
+
+                //update old state
+                oldtodoState = JSON.parse(JSON.stringify(newTodos));
+            }
+
+        </script>
+
+    </body>
+</html>
